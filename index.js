@@ -91,6 +91,7 @@ loader.load("/static/f.json", (font) => {
 
 	// GUI controls for text properties
 	const textFolder = gui.addFolder("Text");
+	gui.hide();
 	textFolder.add(textProperties, "text").onChange(createText);
 	textFolder.add(textProperties, "size", 0.1, 2, 0.1).onChange(createText);
 	textFolder.add(textProperties, "height", 0.1, 1, 0.01).onChange(createText);
