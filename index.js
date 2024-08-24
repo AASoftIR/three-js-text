@@ -45,7 +45,7 @@ let texture2 = new THREE.TextureLoader().load("/static/t2.JPG");
 
 // Text properties object to hold dynamic parameters
 const textProperties = {
-	text: "This is Hard!",
+	text: "This is Hard",
 	size: 0.5,
 	height: 0.2,
 	bevelThickness: 0.03,
