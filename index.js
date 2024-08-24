@@ -40,8 +40,8 @@ window.addEventListener("dblclick", () => {
 });
 
 // Load textures
-let texture = new THREE.TextureLoader().load("/static/t.JPG");
-let texture2 = new THREE.TextureLoader().load("/static/t2.JPG");
+let texture = new THREE.TextureLoader().load("/static/t.jpg");
+let texture2 = new THREE.TextureLoader().load("/static/t2.jpg");
 
 // Text properties object to hold dynamic parameters
 const textProperties = {
