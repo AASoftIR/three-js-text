@@ -1,63 +1,36 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import gsap from "gsap";
 import GUI from "lil-gui";
-import { FontLoader } from "three/examples/jsm/Addons.js";
-import { TextGeometry } from "three/examples/jsm/Addons.js";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+
 const gui = new GUI();
-const colorM = "#ffffff";
 const scene = new THREE.Scene();
 const loader = new FontLoader();
 
-let debuggerObj = {};
 const camera = new THREE.PerspectiveCamera(75, 1200 / window.innerHeight);
-window.addEventListener("keydown", (e) => {
-	if (e.key === "h") {
-		gui.show(gui._hidden);
-	}
-});
-
-let geometry = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4);
-const material = new THREE.MeshBasicMaterial({
-	color: colorM,
-	side: THREE.DoubleSide,
-});
-
-const cube = new THREE.Mesh(geometry, material);
-cube.position.set(-3, -2, 0);
-// scene.add(cube);
-
-debuggerObj.spin = () => {
-	if (cube && cube.rotation) {
-		gsap.to(cube.rotation, {
-			y: cube.rotation.y + Math.PI * 2,
-		});
-	} else {
-		console.error("cube or cube.rotation is null");
-	}
-};
-let g = gui.addFolder("Cube");
-g.add(cube, "visible");
-g.add(cube.material, "wireframe");
-g.add(cube.material, "visible");
-
-g.add(camera.position, "x", -3, 3, 0.01);
-g.add(camera.position, "y", -3, 3, 0.01);
-g.add(camera.position, "z", -10, 15, 0.01);
-scene.add(camera);
-camera.lookAt(cube.position);
 camera.position.z = 3;
 camera.position.y = 0.2;
 camera.position.x = 0.2;
+
+scene.add(camera);
+
 const renderer = new THREE.WebGLRenderer({
 	canvas: document.querySelector("#bg"),
 });
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// Handle window resize
 window.addEventListener("resize", () => {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
+
+// Fullscreen on double-click
 window.addEventListener("dblclick", () => {
 	if (!document.fullscreenElement) {
 		document.documentElement.requestFullscreen();
@@ -65,36 +38,72 @@ window.addEventListener("dblclick", () => {
 		document.exitFullscreen();
 	}
 });
-let texture = new THREE.TextureLoader().load("/static/t.jpg");
-let texture2 = new THREE.TextureLoader().load("/static/t2.jpg");
 
+// Load textures
+let texture = new THREE.TextureLoader().load("/static/t.JPG");
+let texture2 = new THREE.TextureLoader().load("/static/t2.JPG");
+
+// Text properties object to hold dynamic parameters
+const textProperties = {
+	text: "This is Hard!",
+	size: 0.5,
+	height: 0.2,
+	bevelThickness: 0.03,
+	bevelSize: 0.02,
+	bevelEnabled: true,
+	color: "#ffffff",
+};
+
+let textMesh; // To store the text mesh globally
+
+// Load font and create text
 loader.load("/static/f.json", (font) => {
-	let Tgeometry = new TextGeometry("This is Hard!", {
-		font: font,
-		size: 0.5,
-		depth: 0.2,
-		curveSegments: 3,
-		bevelEnabled: true,
-		bevelThickness: 0.03,
-		bevelSize: 0.02,
-		bevelOffset: 0,
-		bevelSegments: 2,
-		color: colorM,
-	});
-	// Tgeometry.computeBoundingBox();
-	// Tgeometry.translate(
-	// 	-(Tgeometry.boundingBox.max.x - 0.02) / 2,
-	// 	-(Tgeometry.boundingBox.max.y - 0.02) / 2,
-	// 	-(Tgeometry.boundingBox.max.z - 0.02) / 2
-	// );
-	Tgeometry.center();
-	let material = new THREE.MeshMatcapMaterial({
-		// color: colorM,
-		// wireframe: true,
-		matcap: texture,
-		side: THREE.DoubleSide,
-	});
-	let mesh = new THREE.Mesh(Tgeometry, material);
+	function createText() {
+		if (textMesh) {
+			scene.remove(textMesh); // Remove the previous text mesh
+		}
+
+		let Tgeometry = new TextGeometry(textProperties.text, {
+			font: font,
+			size: textProperties.size,
+			height: textProperties.height,
+			curveSegments: 3,
+			bevelEnabled: textProperties.bevelEnabled,
+			bevelThickness: textProperties.bevelThickness,
+			bevelSize: textProperties.bevelSize,
+			bevelOffset: 0,
+			bevelSegments: 2,
+		});
+
+		Tgeometry.center();
+		let textMaterial = new THREE.MeshMatcapMaterial({
+			matcap: texture,
+			side: THREE.DoubleSide,
+			color: new THREE.Color(textProperties.color), // Updated to use the color from GUI
+		});
+
+		textMesh = new THREE.Mesh(Tgeometry, textMaterial);
+		scene.add(textMesh);
+	}
+
+	// Initial text creation
+	createText();
+
+	// GUI controls for text properties
+	const textFolder = gui.addFolder("Text");
+	textFolder.add(textProperties, "text").onChange(createText);
+	textFolder.add(textProperties, "size", 0.1, 2, 0.1).onChange(createText);
+	textFolder.add(textProperties, "height", 0.1, 1, 0.01).onChange(createText);
+	textFolder.add(textProperties, "bevelEnabled").onChange(createText);
+	textFolder
+		.add(textProperties, "bevelThickness", 0.01, 0.1, 0.01)
+		.onChange(createText);
+	textFolder
+		.add(textProperties, "bevelSize", 0.01, 0.1, 0.01)
+		.onChange(createText);
+	textFolder.addColor(textProperties, "color").onChange(createText);
+
+	// Create some donuts for decoration
 	let donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 20, 45);
 	let donutMaterial = new THREE.MeshMatcapMaterial({
 		matcap: texture2,
@@ -112,22 +121,17 @@ loader.load("/static/f.json", (font) => {
 		donut.scale.set(scale, scale, scale);
 		scene.add(donut);
 	}
-
-	scene.add(mesh);
 });
-// let axis = new THREE.AxesHelper();
-// scene.add(axis);
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.render(scene, camera);
 const controls = new OrbitControls(camera, document.querySelector("#bg"));
 controls.enableDamping = true;
 let clock = new THREE.Clock();
-function tick() {
-	let elapsed = clock.getElapsedTime();
 
+// Animation loop
+function tick() {
 	controls.update();
 	renderer.render(scene, camera);
 	requestAnimationFrame(tick);
 }
+
 tick();
